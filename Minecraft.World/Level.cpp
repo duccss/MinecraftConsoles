@@ -2461,6 +2461,21 @@ void Level::addAllPendingTileEntities(vector< shared_ptr<TileEntity> >& entities
 	{
 		for(auto& it : entities)
 		{
+		    // Avoid duplicate tile entities at the same coordinates. Duplicates here
+        	// will cause the tile entity to tick multiple times per server tick.
+        	for (auto existing = tileEntityList.begin(); existing != tileEntityList.end();)
+        	{
+        	    shared_ptr<TileEntity> te = *existing;
+        		if (te->x == it->x && te->y == it->y && te->z == it->z)
+        		{
+        			te->setRemoved();
+        			existing = tileEntityList.erase(existing);
+        		}
+        		else
+        		{
+        		    ++existing;
+        		}
+        	}
 			tileEntityList.push_back(it);
 		}
 	}
@@ -2963,6 +2978,21 @@ void Level::setTileEntity(int x, int y, int z, shared_ptr<TileEntity> tileEntity
 		}
 		else
 		{
+		    // Avoid duplicate entries in tileEntityList, as those would tick more
+            // than once per game tick.
+            for (auto it = tileEntityList.begin(); it != tileEntityList.end();)
+            {
+            	shared_ptr<TileEntity> existing = *it;
+            	if (existing->x == x && existing->y == y && existing->z == z)
+            	{
+            		existing->setRemoved();
+            		it = tileEntityList.erase(it);
+            	}
+            	else
+            	{
+            		++it;
+            	}
+            }
 			tileEntityList.push_back(tileEntity);
 
 			LevelChunk *lc = getChunk(x >> 4, z >> 4);
